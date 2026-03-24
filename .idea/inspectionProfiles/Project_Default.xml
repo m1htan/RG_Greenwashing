@@ -1,0 +1,37 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <list>
+          <option value="langchain-google-genai" />
+          <option value="playwright" />
+          <option value="scrapy" />
+          <option value="pdfplumber" />
+          <option value="pymupdf" />
+          <option value="python-Levenshtein" />
+          <option value="rapidfuzz" />
+          <option value="underthesea" />
+          <option value="duckdb" />
+          <option value="pyarrow" />
+          <option value="pytesseract" />
+          <option value="selectolax" />
+          <option value="crawl4ai" />
+          <option value="pdfminer.six" />
+          <option value="pdf2image" />
+          <option value="beautifulsoup4" />
+          <option value="chardet" />
+          <option value="ddgs" />
+          <option value="yake" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="src.BoL.*" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

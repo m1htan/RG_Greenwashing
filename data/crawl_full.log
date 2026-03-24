@@ -1,0 +1,33 @@
+2026-03-23 16:32:26 | INFO     | vietnam_sustainability_crawl | Khởi động crawl | log_level=DEBUG
+2026-03-23 16:32:26 | INFO     | vietnam_sustainability_crawl | Ghi log ra file: D:\Github\RG_Greenwashing\data\crawl_full.log
+2026-03-23 16:32:26 | INFO     | vietnam_sustainability_crawl | === Bước 1: Chuẩn bị thư mục đầu ra ===
+2026-03-23 16:32:26 | INFO     | vietnam_sustainability_crawl | Thư mục: D:\Github\RG_Greenwashing\data\vietnam_sustainabilityreports
+2026-03-23 16:32:26 | INFO     | vietnam_sustainability_crawl | Đã bật tải PDF → D:\Github\RG_Greenwashing\data\vietnam_sustainabilityreports\pdfs
+2026-03-23 16:32:26 | INFO     | vietnam_sustainability_crawl | === Bước 2: Khởi động trình duyệt (nodriver) ===
+2026-03-23 16:32:26 | INFO     | vietnam_sustainability_crawl | headless=False
+2026-03-23 16:32:26 | INFO     | vietnam_sustainability_crawl | Trình duyệt đã sẵn sàng
+2026-03-23 16:32:26 | INFO     | vietnam_sustainability_crawl | === Bước 3: Tải trang gốc (vượt Cloudflare / session) ===
+2026-03-23 16:32:26 | INFO     | vietnam_sustainability_crawl | Đang mở: https://www.sustainabilityreports.com/country/vietnam
+2026-03-23 16:32:28 | INFO     | vietnam_sustainability_crawl | Chờ 15s để trang và script ổn định…
+2026-03-23 16:32:43 | INFO     | vietnam_sustainability_crawl | Trang gốc xong, bắt đầu gọi API qua XHR trong trang
+2026-03-23 16:32:43 | INFO     | vietnam_sustainability_crawl | === Bước 4: Lấy danh sách công ty Việt Nam (phân trang) ===
+2026-03-23 16:32:43 | INFO     | vietnam_sustainability_crawl | Gọi API companies: page=1 per_page=200 (đã có 0 công ty)
+2026-03-23 16:32:43 | DEBUG    | vietnam_sustainability_crawl | XHR bắt đầu [companies page=1] URL=https://srdp-api-gah6f2asbedwagbp.westeurope-01.azurewebsites.net/api/public/taxonomy/country/vietnam/companies?page=1&per_page=200
+2026-03-23 16:32:44 | DEBUG    | vietnam_sustainability_crawl | XHR xong [companies page=1]: keys=['companies', 'total', 'total_reports', 'page', 'per_page', 'taxonomy', 'value']
+2026-03-23 16:32:44 | INFO     | vietnam_sustainability_crawl | API báo total công ty=309, total_reports (site)=867
+2026-03-23 16:32:44 | INFO     | vietnam_sustainability_crawl | Trang 1: +200 công ty (tổng tích lũy 200 / 309)
+2026-03-23 16:32:44 | INFO     | vietnam_sustainability_crawl | Gọi API companies: page=2 per_page=200 (đã có 200 công ty)
+2026-03-23 16:32:44 | DEBUG    | vietnam_sustainability_crawl | XHR bắt đầu [companies page=2] URL=https://srdp-api-gah6f2asbedwagbp.westeurope-01.azurewebsites.net/api/public/taxonomy/country/vietnam/companies?page=2&per_page=200
+2026-03-23 16:32:44 | DEBUG    | vietnam_sustainability_crawl | XHR xong [companies page=2]: keys=['companies', 'total', 'total_reports', 'page', 'per_page', 'taxonomy', 'value']
+2026-03-23 16:32:44 | INFO     | vietnam_sustainability_crawl | Trang 2: +109 công ty (tổng tích lũy 309 / 309)
+2026-03-23 16:32:44 | INFO     | vietnam_sustainability_crawl | Đã đủ số công ty theo total=309
+2026-03-23 16:32:44 | INFO     | vietnam_sustainability_crawl | === Bước 5: Với từng công ty — lấy báo cáo (và PDF nếu bật) ===
+2026-03-23 16:32:44 | INFO     | vietnam_sustainability_crawl | [1/309] Công ty: DHG Pharmaceutical JSC | ISIN=VN000000DHG0 | slug=dhg-pharmaceutical
+2026-03-23 16:32:44 | DEBUG    | vietnam_sustainability_crawl | Reports API: ISIN=VN000000DHG0 page=1
+2026-03-23 16:32:44 | DEBUG    | vietnam_sustainability_crawl | XHR bắt đầu [reports isin=VN000000DHG0 page=1] URL=https://srdp-api-gah6f2asbedwagbp.westeurope-01.azurewebsites.net/api/public/reports?page=1&per_page=50&isins=VN000000DHG0
+2026-03-23 16:32:44 | DEBUG    | vietnam_sustainability_crawl | XHR xong [reports isin=VN000000DHG0 page=1]: keys=['items', 'total', 'page', 'per_page', 'total_pages']
+2026-03-23 16:32:44 | INFO     | vietnam_sustainability_crawl |   → Trang báo cáo 1: 16 mục (API total=16)
+2026-03-23 16:32:44 | INFO     | vietnam_sustainability_crawl |   Tải PDF report_id=80006 năm=2024 → dhg-pharmaceutical_2024_AR+_80006.pdf
+2026-03-23 16:32:47 | INFO     | vietnam_sustainability_crawl |   Đã lưu dhg-pharmaceutical_2024_AR+_80006.pdf (2309517 bytes)
+2026-03-23 16:32:47 | INFO     | vietnam_sustainability_crawl |   Tải PDF report_id=80003 năm=2022 → dhg-pharmaceutical_2022_SR_80003.pdf
+2026-03-23 16:32:48 | INFO     | vietnam_sustainability_crawl | === Đóng trình duyệt ===
