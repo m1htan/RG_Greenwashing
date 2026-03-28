@@ -352,30 +352,87 @@ async def _run(
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="Crawl Vietnam sustainability reports (SustainabilityReports.com).")
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+            sys.stderr.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+    repo = Path(__file__).resolve().parent.parent
+    rs = str(repo)
+    if rs not in sys.path:
+        sys.path.insert(0, rs)
+    from config.settings import (
+        get_bool,
+        get_int,
+        get_int_optional,
+        get_path,
+        get_path_optional,
+        get_str,
+        load_env,
+    )
+
+    load_env()
+
+    p = argparse.ArgumentParser(
+        description="Crawl Vietnam sustainability reports (SustainabilityReports.com).",
+        epilog="Giá trị mặc định từ config/.env — xem config/.env.example.",
+    )
     p.add_argument(
         "--out",
         type=Path,
-        default=Path("data/vietnam_sustainabilityreports"),
+        default=get_path("CRAWL_OUT_DIR", "data/vietnam_sustainabilityreports"),
         help="Output directory for JSON and optional PDFs",
     )
-    p.add_argument("--api-base", default=DEFAULT_API_BASE, help="Backend API base URL")
-    p.add_argument("--download-pdfs", action="store_true", help="Download PDFs to out/pdfs")
-    p.add_argument("--skip-existing", action="store_true", help="Skip PDFs that already exist on disk")
-    p.add_argument("--per-page-companies", type=int, default=200)
-    p.add_argument("--per-page-reports", type=int, default=50)
-    p.add_argument("--headless", action="store_true", help="Run Chromium headless (may affect Cloudflare)")
-    p.add_argument("--max-companies", type=int, default=None, help="Limit companies (debug)")
+    p.add_argument(
+        "--api-base",
+        default=get_str("CRAWL_API_BASE", DEFAULT_API_BASE),
+        help="Backend API base URL",
+    )
+    p.add_argument(
+        "--download-pdfs",
+        action=argparse.BooleanOptionalAction,
+        default=get_bool("CRAWL_DOWNLOAD_PDFS", False),
+        help="Download PDFs to out/pdfs",
+    )
+    p.add_argument(
+        "--skip-existing",
+        action=argparse.BooleanOptionalAction,
+        default=get_bool("CRAWL_SKIP_EXISTING_PDFS", False),
+        help="Skip PDFs that already exist on disk",
+    )
+    p.add_argument(
+        "--per-page-companies",
+        type=int,
+        default=get_int("CRAWL_PER_PAGE_COMPANIES", 200),
+    )
+    p.add_argument(
+        "--per-page-reports",
+        type=int,
+        default=get_int("CRAWL_PER_PAGE_REPORTS", 50),
+    )
+    p.add_argument(
+        "--headless",
+        action=argparse.BooleanOptionalAction,
+        default=get_bool("CRAWL_HEADLESS", False),
+        help="Run Chromium headless (may affect Cloudflare)",
+    )
+    p.add_argument(
+        "--max-companies",
+        type=int,
+        default=get_int_optional("CRAWL_MAX_COMPANIES"),
+        help="Limit companies (debug)",
+    )
     p.add_argument(
         "--log-level",
-        default="INFO",
+        default=get_str("CRAWL_LOG_LEVEL", "INFO"),
         choices=("DEBUG", "INFO", "WARNING", "ERROR"),
         help="Mức log (DEBUG = chi tiết API/phân trang)",
     )
     p.add_argument(
         "--log-file",
         type=Path,
-        default=None,
+        default=get_path_optional("CRAWL_LOG_FILE"),
         help="Ghi thêm log vào file UTF-8 (song song với stderr)",
     )
     args = p.parse_args()
