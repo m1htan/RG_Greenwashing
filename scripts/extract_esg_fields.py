@@ -399,6 +399,10 @@ def process_pdf(
                 temperature=temperature,
             ),
         )
+        # --- Cost tracking ---
+        if '_GLOBAL_LOG_COST' in globals():
+            _GLOBAL_LOG_COST(response, model_name, pdf_path.name, status="ok")
+
         raw_text = getattr(response, "text", None) or ""
         if not raw_text.strip():
             dbg = _response_debug(response)
@@ -465,6 +469,10 @@ def main() -> None:
         except Exception:
             pass
     _ensure_repo_on_path()
+    from cost.cost_tracker import log_api_call as _log_cost
+    global _GLOBAL_LOG_COST
+    _GLOBAL_LOG_COST = _log_cost
+
     from config.settings import (
         ENV_FILE_CONFIG,
         ENV_FILE_ROOT,

@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gemini API Cost Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  :root {
+    --bg-primary: #0f1117;
+    --bg-card: #1a1d27;
+    --bg-card-hover: #22263a;
+    --border: #2a2e3f;
+    --text-primary: #e4e6ed;
+    --text-secondary: #8b8fa3;
+    --accent-blue: #4f8ff7;
+    --accent-purple: #a77bff;
+    --accent-green: #34d399;
+    --accent-orange: #f59e0b;
+    --accent-red: #ef4444;
+    --accent-cyan: #22d3ee;
+    --gradient-blue: linear-gradient(135deg, #4f8ff7, #7b61ff);
+    --gradient-green: linear-gradient(135deg, #34d399, #22d3ee);
+    --gradient-orange: linear-gradient(135deg, #f59e0b, #ef4444);
+    --shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+  .header {
+    background: linear-gradient(135deg, #1a1d27 0%, #0f1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    background: var(--gradient-blue);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .live-dot {
+    width: 8px; height: 8px;
+    background: var(--accent-green);
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  /* KPI Cards Row */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-blue);
+  }
+  .kpi-card .kpi-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .kpi-card .kpi-value {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .kpi-card .kpi-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 6px;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .kpi-card.blue::before { background: var(--gradient-blue); }
+  .kpi-card.green::before { background: var(--gradient-green); }
+  .kpi-card.orange::before { background: var(--gradient-orange); }
+  .kpi-card.purple::before { background: linear-gradient(135deg, #a77bff, #4f8ff7); }
+
+  /* Charts Row */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .chart-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .chart-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text-secondary);
+  }
+  .chart-container { position: relative; height: 280px; }
+
+  /* Model Breakdown */
+  .model-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .model-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .model-card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .model-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .badge-pro { background: rgba(167,123,255,0.2); color: var(--accent-purple); }
+  .badge-flash { background: rgba(34,211,238,0.2); color: var(--accent-cyan); }
+  .model-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .model-stat:last-child { border: none; }
+  .model-stat .label { color: var(--text-secondary); }
+
+  /* Detail Table */
+  .table-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    overflow-x: auto;
+  }
+  .table-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .table-card h3 span { font-weight: 400; font-size: 12px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(42,46,63,0.5);
+    white-space: nowrap;
+  }
+  tr:hover td { background: var(--bg-card-hover); }
+  .status-ok { color: var(--accent-green); }
+  .status-error { color: var(--accent-red); }
+  .status-partial { color: var(--accent-orange); }
+
+  .cost-highlight { color: var(--accent-green); font-weight: 600; }
+
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-secondary);
+  }
+  .empty-state h2 { font-size: 20px; margin-bottom: 8px; color: var(--text-primary); }
+  .empty-state p { font-size: 14px; }
+
+  .pricing-note {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 16px;
+    border-top: 1px solid var(--border);
+    margin-top: 24px;
+  }
+
+  @media (max-width: 768px) {
+    .charts-row { grid-template-columns: 1fr; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .container { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚡ Gemini API Cost Dashboard</h1>
+  <div class="header-meta">
+    <span><span class="live-dot"></span> Auto-refresh 10s</span>
+    <span id="lastUpdate">—</span>
+  </div>
+</div>
+
+<div class="container" id="app">
+  <div class="empty-state" id="emptyState">
+    <h2>No API calls yet</h2>
+    <p>Run <code>python scripts/extract_esg_fields.py</code> to start processing PDFs.<br>
+    This dashboard will auto-refresh every 10 seconds.</p>
+  </div>
+
+  <div id="dashboard" style="display:none;">
+    <!-- KPI Cards -->
+    <div class="kpi-row">
+      <div class="kpi-card blue">
+        <div class="kpi-label">Total Cost</div>
+        <div class="kpi-value" id="totalCost">$0.00</div>
+        <div class="kpi-sub" id="totalCostSub">0 API calls</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-label">Files Processed</div>
+        <div class="kpi-value" id="totalFiles">0</div>
+        <div class="kpi-sub" id="totalFilesSub">of 823 total</div>
+      </div>
+      <div class="kpi-card orange">
+        <div class="kpi-label">Avg Cost / File</div>
+        <div class="kpi-value" id="avgCost">$0.00</div>
+        <div class="kpi-sub" id="avgCostSub">—</div>
+      </div>
+      <div class="kpi-card purple">
+        <div class="kpi-label">Total Tokens</div>
+        <div class="kpi-value" id="totalTokens">0</div>
+        <div class="kpi-sub" id="totalTokensSub">input + output</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3>Cumulative Cost Over Time (USD)</h3>
+        <div class="chart-container">
+          <canvas id="costChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>Cost by Model</h3>
+        <div class="chart-container">
+          <canvas id="modelChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Model Breakdown -->
+    <div class="model-cards" id="modelCards"></div>
+
+    <!-- Recent Calls Table -->
+    <div class="table-card">
+      <h3>
+        API Call Log
+        <span id="tableCount">0 records</span>
+      </h3>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Time</th>
+            <th>PDF File</th>
+            <th>Model</th>
+            <th>Input Tokens</th>
+            <th>Output Tokens</th>
+            <th>Cost (USD)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="pricing-note">
+      Pricing: Gemini 2.5 Pro — $1.25 / $10.00 per 1M tokens (in/out) &nbsp;|&nbsp;
+      Gemini 2.5 Flash — $0.15 / $0.60 per 1M tokens (in/out) &nbsp;|&nbsp;
+      Long context (&gt;200K tokens) pricing may differ
+    </div>
+  </div>
+</div>
+
+<script>
+let costChart = null;
+let modelChart = null;
+
+function formatUSD(n) {
+  if (n < 0.01 && n > 0) return '$' + n.toFixed(4);
+  if (n < 1) return '$' + n.toFixed(3);
+  return '$' + n.toFixed(2);
+}
+
+function formatTokens(n) {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+  return n.toString();
+}
+
+function statusClass(s) {
+  if (s === 'ok') return 'status-ok';
+  if (s === 'error' || s === 'parse_error') return 'status-error';
+  return 'status-partial';
+}
+
+function shortTime(ts) {
+  try {
+    const d = new Date(ts);
+    return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  } catch { return ts; }
+}
+
+function shortFilename(fn) {
+  if (!fn) return '—';
+  if (fn.length > 40) return fn.substring(0, 37) + '…';
+  return fn;
+}
+
+const MODEL_COLORS = {
+  'gemini-2.5-pro': '#a77bff',
+  'gemini-2.5-flash': '#22d3ee',
+  'gemini-2.0-flash': '#34d399',
+};
+
+function getModelColor(model) {
+  for (const [key, color] of Object.entries(MODEL_COLORS)) {
+    if (model.includes(key)) return color;
+  }
+  return '#f59e0b';
+}
+
+function buildCostChart(records) {
+  const ctx = document.getElementById('costChart').getContext('2d');
+  let cumulative = 0;
+  const labels = [];
+  const data = [];
+  records.forEach((r, i) => {
+    cumulative += r.cost_total_usd || 0;
+    labels.push(i + 1);
+    data.push(parseFloat(cumulative.toFixed(4)));
+  });
+
+  if (costChart) costChart.destroy();
+  costChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Cumulative Cost (USD)',
+        data,
+        borderColor: '#4f8ff7',
+        backgroundColor: 'rgba(79,143,247,0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: records.length > 50 ? 0 : 3,
+        pointHoverRadius: 5,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => `File #${items[0].label}`,
+            label: (item) => `Total: ${formatUSD(item.raw)}`,
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Files Processed', color: '#8b8fa3' },
+          grid: { color: 'rgba(42,46,63,0.5)' },
+          ticks: { color: '#8b8fa3' }
+        },
+        y: {
+          title: { display: true, text: 'USD', color: '#8b8fa3' },
+          grid: { color: 'rgba(42,46,63,0.5)' },
+          ticks: { color: '#8b8fa3', callback: v => '$' + v.toFixed(2) }
+        }
+      }
+    }
+  });
+}
+
+function buildModelChart(byModel) {
+  const ctx = document.getElementById('modelChart').getContext('2d');
+  const labels = Object.keys(byModel);
+  const data = labels.map(m => byModel[m].cost_usd);
+  const colors = labels.map(m => getModelColor(m));
+
+  if (modelChart) modelChart.destroy();
+  modelChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: colors,
+        borderColor: '#1a1d27',
+        borderWidth: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: '#e4e6ed', font: { size: 12 }, padding: 16 }
+        },
+        tooltip: {
+          callbacks: {
+            label: (item) => `${item.label}: ${formatUSD(item.raw)}`
+          }
+        }
+      }
+    }
+  });
+}
+
+function buildModelCards(byModel) {
+  const container = document.getElementById('modelCards');
+  container.innerHTML = '';
+  for (const [model, info] of Object.entries(byModel)) {
+    const isFlash = model.includes('flash');
+    const badgeClass = isFlash ? 'badge-flash' : 'badge-pro';
+    const badgeText = isFlash ? 'FLASH' : 'PRO';
+    const avgTokens = info.calls > 0 ? Math.round(info.tokens / info.calls) : 0;
+    const avgCost = info.calls > 0 ? info.cost_usd / info.calls : 0;
+
+    container.innerHTML += `
+      <div class="model-card">
+        <h3>${model} <span class="model-badge ${badgeClass}">${badgeText}</span></h3>
+        <div class="model-stat"><span class="label">Total Calls</span><span>${info.calls}</span></div>
+        <div class="model-stat"><span class="label">Total Cost</span><span class="cost-highlight">${formatUSD(info.cost_usd)}</span></div>
+        <div class="model-stat"><span class="label">Total Tokens</span><span>${formatTokens(info.tokens)}</span></div>
+        <div class="model-stat"><span class="label">Avg Tokens/Call</span><span>${formatTokens(avgTokens)}</span></div>
+        <div class="model-stat"><span class="label">Avg Cost/Call</span><span>${formatUSD(avgCost)}</span></div>
+      </div>`;
+  }
+}
+
+function buildTable(records) {
+  const tbody = document.getElementById('tableBody');
+  // Show newest first, max 200 rows
+  const display = records.slice().reverse().slice(0, 200);
+  document.getElementById('tableCount').textContent = `${records.length} records`;
+
+  tbody.innerHTML = display.map((r, i) => `
+    <tr>
+      <td>${records.length - i}</td>
+      <td>${shortTime(r.timestamp)}</td>
+      <td title="${r.pdf_filename || ''}">${shortFilename(r.pdf_filename)}</td>
+      <td>${r.model || '—'}</td>
+      <td>${formatTokens(r.prompt_tokens || 0)}</td>
+      <td>${formatTokens(r.candidates_tokens || 0)}</td>
+      <td class="cost-highlight">${formatUSD(r.cost_total_usd || 0)}</td>
+      <td class="${statusClass(r.status)}">${r.status || '—'}</td>
+    </tr>
+  `).join('');
+}
+
+async function fetchAndRender() {
+  try {
+    const resp = await fetch('/api/cost-data');
+    const data = await resp.json();
+
+    if (data.total_calls === 0) {
+      document.getElementById('emptyState').style.display = '';
+      document.getElementById('dashboard').style.display = 'none';
+      return;
+    }
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('dashboard').style.display = '';
+
+    // KPI
+    document.getElementById('totalCost').textContent = formatUSD(data.total_cost_usd);
+    document.getElementById('totalCostSub').textContent = `${data.total_calls} API calls`;
+    document.getElementById('totalFiles').textContent = data.total_calls;
+    document.getElementById('avgCost').textContent = formatUSD(data.avg_cost_per_file);
+    const est = data.avg_cost_per_file * 823;
+    document.getElementById('avgCostSub').textContent = `Est. total 823 files: ${formatUSD(est)}`;
+    document.getElementById('totalTokens').textContent = formatTokens(data.total_tokens);
+    document.getElementById('totalTokensSub').textContent =
+      `${formatTokens(data.total_prompt_tokens)} in + ${formatTokens(data.total_output_tokens)} out`;
+
+    // Charts
+    buildCostChart(data.records || []);
+    buildModelChart(data.by_model || {});
+    buildModelCards(data.by_model || {});
+    buildTable(data.records || []);
+
+    document.getElementById('lastUpdate').textContent =
+      'Updated ' + new Date().toLocaleTimeString('en-GB');
+  } catch (e) {
+    console.error('Fetch error:', e);
+  }
+}
+
+// Initial load + auto-refresh
+fetchAndRender();
+setInterval(fetchAndRender, 10000);
+</script>
+</body>
+</html>
